@@ -1,2 +1,2 @@
 # prospects
- This in an API created with Spring Boot of Customers for ClientesProspectos mobile app 
+ This is an API created with Spring Boot for ClientesProspectos mobile app 
