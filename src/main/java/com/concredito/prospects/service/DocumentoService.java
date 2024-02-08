@@ -1,77 +1,84 @@
 package com.concredito.prospects.service;
 
 import com.concredito.prospects.model.Documento;
-import com.concredito.prospects.repository.DocumentoRepository;
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBObject;
+import com.mongodb.client.gridfs.GridFSFindIterable;
 import com.mongodb.client.gridfs.model.GridFSFile;
-import org.bson.types.ObjectId;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.InputStreamResource;
-import org.springframework.core.io.Resource;
-import org.springframework.data.mongodb.core.MongoTemplate;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.gridfs.GridFsOperations;
-import org.springframework.data.mongodb.gridfs.GridFsResource;
 import org.springframework.data.mongodb.gridfs.GridFsTemplate;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.http.MediaType;
-
-import java.io.*;
-import java.util.List;
 
 import java.io.IOException;
-import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class DocumentoService {
-
-    private final DocumentoRepository documentoRepository;
-    private final MongoTemplate mongoTemplate;
     private final GridFsTemplate gridFsTemplate;
+    private GridFsOperations gridFsoperations;
 
-    @Autowired
-    public DocumentoService(DocumentoRepository documentoRepository, MongoTemplate mongoTemplate, GridFsTemplate gridFsTemplate) {
-        this.documentoRepository = documentoRepository;
-        this.mongoTemplate = mongoTemplate;
+    public DocumentoService(GridFsTemplate gridFsTemplate, GridFsOperations gridFsoperations) {
         this.gridFsTemplate = gridFsTemplate;
+        this.gridFsoperations = gridFsoperations;
     }
 
-    public Documento guardarDocumento(String prospectoId, String nombre, MultipartFile archivo, String tipoArchivo, String metadata) throws IOException {
+    public String agregarArchivo(MultipartFile subir, String nombre, String prospectoId) throws IOException {
+        DBObject metadata = new BasicDBObject();
+        metadata.put("tamanoArchivo", subir.getSize());
+        metadata.put("prospectoId", prospectoId);
+
+        String extension = FilenameUtils.getExtension(subir.getOriginalFilename());
+
+        String nombreConExtension = nombre + "." + extension;
+
+        Object fileID = gridFsTemplate.store(subir.getInputStream(), nombreConExtension, subir.getContentType(), metadata);
+
+        return fileID.toString();
+    }
+
+    public Documento descargarArchivo(String id) throws IOException {
+        GridFSFile gridFSFile = gridFsTemplate.findOne(new Query(Criteria.where("_id").is(id)));
+
         Documento documento = new Documento();
-        documento.setProspectoId(prospectoId);
-        documento.setNombre(nombre);
 
-        // Almacenar el archivo en GridFS con metadata y tipo de archivo
-        String archivoId = almacenarArchivoEnGridFS(archivo, nombre, tipoArchivo, metadata);
+        if (gridFSFile != null && gridFSFile.getMetadata() != null) {
+            documento.setNombre(gridFSFile.getFilename());
 
-        // Guardar la información del documento en la colección documentos
-        documento.setId(archivoId);
-        return documentoRepository.save(documento);
+            documento.setTipoArchivo(gridFSFile.getMetadata().get("_contentType").toString());
+
+            documento.setTamanoArchivo(gridFSFile.getMetadata().get("tamanoArchivo").toString());
+
+            documento.setArchivo(IOUtils.toByteArray(gridFsoperations.getResource(gridFSFile).getInputStream()));
+        }
+        return documento;
     }
 
-    public InputStream descargarDocumento(String documentoId) throws IOException {
-        // Obtener el archivo desde GridFS
-        GridFSFile gridFSFile = gridFsTemplate.findOne(new Query(Criteria.where("_id").is(documentoId)));
-        if (gridFSFile == null) {
-            throw new IOException("Documento no encontrado");
+    public List<Documento> obtenerDocumentosPorProspectoId(String prospectoId) throws IOException {
+        List<Documento> documentos = new ArrayList<>();
+        Query query = new Query(Criteria.where("metadata.prospectoId").is(prospectoId));
+        GridFSFindIterable gridFSFiles = gridFsTemplate.find(query);
+
+        for (GridFSFile gridFSFile : gridFSFiles) {
+            Documento documento = new Documento();
+            documento.setProspectoId(gridFSFile.getMetadata().get("prospectoId").toString());
+            documento.setNombre(gridFSFile.getFilename());
+            documento.setTipoArchivo(gridFSFile.getMetadata().get("_contentType").toString());
+            documento.setTamanoArchivo(gridFSFile.getMetadata().get("tamanoArchivo").toString());
+            documento.setArchivo(IOUtils.toByteArray(gridFsoperations.getResource(gridFSFile).getInputStream()));
+
+            documentos.add(documento);
         }
 
-        // Devolver un InputStream para el archivo
-        GridFsResource resource = gridFsTemplate.getResource(gridFSFile);
-        return resource.getInputStream();
+        return documentos;
     }
 
-    public List<Documento> obtenerDocumentosPorProspectoId(String prospectoId) {
-        return documentoRepository.findByProspectoId(prospectoId);
-    }
-
-    private String almacenarArchivoEnGridFS(MultipartFile archivo, String nombre, String tipoArchivo, String metadata) throws IOException {
-        // Almacenar el archivo en GridFS con metadata y tipo de archivo
-        return gridFsTemplate.store(archivo.getInputStream(), nombre, tipoArchivo, metadata).toString();
+    public void eliminarDocumento(String id) {
+        gridFsTemplate.delete(new Query(Criteria.where("_id").is(id)));
     }
 }

@@ -6,31 +6,17 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Document(collection = "documentos")
 public class Documento {
 
-    @Id
-    private String id;
-    private String nombre;
-
     private String prospectoId;
-    private byte[] archivo;
+
+    private String nombre;
 
     private String tipoArchivo;
 
-    private String metadata;
+    private String tamanoArchivo;
 
-    public String getId() {
-        return id;
-    }
+    private byte[] archivo;
 
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getNombre() {
-        return nombre;
-    }
-
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
+    public Documento() {
     }
 
     public String getProspectoId() {
@@ -41,12 +27,12 @@ public class Documento {
         this.prospectoId = prospectoId;
     }
 
-    public byte[] getArchivo() {
-        return archivo;
+    public String getNombre() {
+        return nombre;
     }
 
-    public void setArchivo(byte[] archivo) {
-        this.archivo = archivo;
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
     }
 
     public String getTipoArchivo() {
@@ -57,11 +43,19 @@ public class Documento {
         this.tipoArchivo = tipoArchivo;
     }
 
-    public String getMetadata() {
-        return metadata;
+    public String getTamanoArchivo() {
+        return tamanoArchivo;
     }
 
-    public void setMetadata(String metadata) {
-        this.metadata = metadata;
+    public void setTamanoArchivo(String tamanoArchivo) {
+        this.tamanoArchivo = tamanoArchivo;
+    }
+
+    public byte[] getArchivo() {
+        return archivo;
+    }
+
+    public void setArchivo(byte[] archivo) {
+        this.archivo = archivo;
     }
 }
