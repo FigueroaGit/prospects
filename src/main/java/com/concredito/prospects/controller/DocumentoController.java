@@ -28,7 +28,7 @@ public class DocumentoController {
 
     @PostMapping("/upload")
     public ResponseEntity<?> upload(@RequestParam("archivo")MultipartFile archivo, @RequestParam("nombre") String nombre, @RequestParam("prospectoId") String prospectoId) throws IOException {
-        return new ResponseEntity<>(documentoService.agregarArchivo(archivo, nombre, prospectoId), HttpStatus.OK);
+        return new ResponseEntity<>(documentoService.agregarArchivo(archivo, prospectoId), HttpStatus.OK);
     }
 
     @GetMapping("/download/{id}")
@@ -41,14 +41,10 @@ public class DocumentoController {
                 .body(new ByteArrayResource(cargarDocumento.getArchivo()));
     }
 
-    @GetMapping("/documentos-por-prospecto")
-    public ResponseEntity<List<Documento>> obtenerDocumentosPorProspecto(@RequestParam("prospectoId") String prospectoId) {
-        try {
-            List<Documento> documentos = documentoService.obtenerDocumentosPorProspectoId(prospectoId);
-            return ResponseEntity.ok(documentos);
-        } catch (IOException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
+    @GetMapping("/documentos-por-prospecto/{prospectoId}")
+    public ResponseEntity<List<Documento>> obtenerDocumentosPorProspectoId(@PathVariable String prospectoId) throws IOException {
+        List<Documento> documento = documentoService.obtenerDocumentosPorProspectoId(prospectoId);
+        return ResponseEntity.ok(documento);
     }
 
     @DeleteMapping("/eliminar-documento")

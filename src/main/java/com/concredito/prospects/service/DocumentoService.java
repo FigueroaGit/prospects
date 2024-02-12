@@ -28,16 +28,13 @@ public class DocumentoService {
         this.gridFsoperations = gridFsoperations;
     }
 
-    public String agregarArchivo(MultipartFile subir, String nombre, String prospectoId) throws IOException {
+    public String agregarArchivo(MultipartFile subir, String prospectoId) throws IOException {
         DBObject metadata = new BasicDBObject();
+        String prospectoIdSinComillas = prospectoId.replace("\"", "");
         metadata.put("tamanoArchivo", subir.getSize());
-        metadata.put("prospectoId", prospectoId);
+        metadata.put("prospectoId", prospectoIdSinComillas);
 
-        String extension = FilenameUtils.getExtension(subir.getOriginalFilename());
-
-        String nombreConExtension = nombre + "." + extension;
-
-        Object fileID = gridFsTemplate.store(subir.getInputStream(), nombreConExtension, subir.getContentType(), metadata);
+        Object fileID = gridFsTemplate.store(subir.getInputStream(), subir.getOriginalFilename(), subir.getContentType(), metadata);
 
         return fileID.toString();
     }
@@ -66,11 +63,11 @@ public class DocumentoService {
 
         for (GridFSFile gridFSFile : gridFSFiles) {
             Documento documento = new Documento();
+            documento.setId(gridFSFile.getObjectId().toHexString());
             documento.setProspectoId(gridFSFile.getMetadata().get("prospectoId").toString());
             documento.setNombre(gridFSFile.getFilename());
             documento.setTipoArchivo(gridFSFile.getMetadata().get("_contentType").toString());
             documento.setTamanoArchivo(gridFSFile.getMetadata().get("tamanoArchivo").toString());
-            documento.setArchivo(IOUtils.toByteArray(gridFsoperations.getResource(gridFSFile).getInputStream()));
 
             documentos.add(documento);
         }

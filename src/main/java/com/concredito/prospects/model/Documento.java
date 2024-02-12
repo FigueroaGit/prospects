@@ -1,10 +1,13 @@
 package com.concredito.prospects.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document(collection = "documentos")
 public class Documento {
+
+    private String id;
 
     private String prospectoId;
 
@@ -14,9 +17,18 @@ public class Documento {
 
     private String tamanoArchivo;
 
+    @JsonIgnore
     private byte[] archivo;
 
     public Documento() {
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public String getProspectoId() {
