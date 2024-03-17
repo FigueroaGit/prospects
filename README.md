@@ -20,7 +20,7 @@ There are a few ways to open this project.
 - Upload This API in an CLOUD SERVER
 
 ## 🤝 Want to Contribute?
-All contributions are welcomed. This project is still in development. If you encounter any problems, please create an issue [here](https://github.com/FigueroaGit/prospectos/issues) & if you want to contribute to this project, PRs are welcomed! 🙂
+All contributions are welcomed. This project is still in development. If you encounter any problems, please create an issue [here](https://github.com/FigueroaGit/prospects/issues) & if you want to contribute to this project, PRs are welcomed! 🙂
 
 ## 👨‍💻 Developed By
 
